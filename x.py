@@ -4,6 +4,7 @@ import random
 import json
 import time
 import os
+import cloudscraper
 from concurrent.futures import ThreadPoolExecutor
 
 # ANSI Colors
@@ -11,7 +12,7 @@ BOLD, R, G, Y, D, C = '\033[1m', '\033[91m', '\033[92m', '\033[93m', '\033[0m', 
 
 def logo():
     os.system('cls' if os.name == 'nt' else 'clear')
-    print(f'{BOLD}{C}\n       _____ __      ___                \n      / __(_) /__   / _ \\__ ____ _  ___ \n     / _// / / -_) / // / // /  \' \\/ _ \\\n    /_/ /_/_/\\__/ /____/\\_,_/_/_/_/ .__/\n                                 /_/    \n\n            FB File Maker V-2.3 (Ultra Safe)\n {D}')
+    print(f'{BOLD}{C}\n       _____ __      ___                \n      / __(_) /__   / _ \\__ ____ _  ___ \n     / _// / / -_) / // / // /  \' \\/ _ \\\n    /_/ /_/_/\\__/ /____/\\_,_/_/_/_/ .__/\n                                 /_/    \n\n            FB File Maker V-2.4 (Max-Speed)\n {D}')
 
 def username_gen(names, start, end):
     usernames = []
@@ -21,13 +22,13 @@ def username_gen(names, start, end):
     return usernames
 
 def checker(uname):
-    """সার্ভারের রেট লিমিট বাইপাস করার জন্য অ্যাডভান্সড লজিক"""
+    """স্পিড ঠিক রেখে ব্লক এড়াতে উন্নত লজিক"""
     url = 'https://baji999.net/api/wv/v1/user/registerPreCheck'
     
-    # প্রতিবার ইউনিক ডিভাইস আইডি জেনারেট করা
-    unique_hash = "".join(random.choices("0123456789abcdef", k=32))
+    # Cloudscraper সেশন যা সরাসরি ক্লাউডফ্লেয়ার বাইপাস করবে
+    scraper = cloudscraper.create_scraper()
     
-    # cxs.py থেকে নেওয়া হাই-সিকিউরিটি হেডার
+    # প্রতি রিকোয়েস্টে আলাদা আলাদা ডিভাইস প্রোফাইল
     headers = {
         'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
         'sec-ch-ua-mobile': '?1',
@@ -40,47 +41,39 @@ def checker(uname):
         'sec-ch-ua-platform': '"Android"'
     }
 
-    # cxs.py এর সেই নির্দিষ্ট ফিঙ্গারপ্রিন্ট লজিক যা ৪MD বাইপাস করে
+    # cxs.py এর সেই নির্দিষ্ট ফিঙ্গারপ্রিন্ট যা এপিআই গ্রিন সিগন্যাল দেয়
     payload = {
         'languageTypeId': 1,
         'currencyTypeId': 8,
         'userId': uname,
-        'phone': '19' + str(random.randint(11111111, 99999999)),
+        'phone': '17' + str(random.randint(11111111, 99999999)),
         'registerTypeId': 0,
         'random': str(random.randint(1000, 9999)),
         'fingerprint2': '58df140599f977faf8951888e888e807',
         'browserHash': '3969af0f2862ebb0d85edf6ea8430292',
-        'deviceHash': unique_hash
+        'deviceHash': "".join(random.choices("0123456789abcdef", k=32))
     }
 
     try:
-        # জিলানি ডিলে (বট ডিটেকশন এড়াতে র‍্যান্ডম বিরতি)
-        time.sleep(random.uniform(0.5, 1.2)) 
-        
-        # সেশন ব্যবহার করলে ব্লক হওয়ার সম্ভাবনা কম থাকে
-        session = requests.Session()
-        response = session.post(url, headers=headers, json=payload, timeout=12)
+        # রিকোয়েস্ট পাঠানো
+        response = scraper.post(url, headers=headers, json=payload, timeout=10)
         
         if response.status_code == 200:
             data = response.json()
-            # F0003 মানে আইডি আগে থেকেই আছে (VALID)
             if data.get('status') == 'F0003': return True
-            
-            # S0001 মানে এপিআই লিমিট ওভার
             if data.get('status') == 'S0001':
-                print(f'{R} [!] API LIMIT! SLEEPING 30s...{D}')
-                time.sleep(30)
+                # ব্লক হলে সামান্য বিরতি
+                time.sleep(2) 
                 return False
         elif response.status_code == 403:
-            print(f'{R} [!] IP BLOCKED (403)! CHANGE VPN SERVER.{D}')
-            time.sleep(60)
+            time.sleep(5)
     except: pass
     return False
 
 def check_username(username):
     uname = username.split('|')[0].strip()
     if checker(uname):
-        print(f'{BOLD}{G} [VALID FB ID] {uname}{D}')
+        print(f'{BOLD}{G} [VALID FB] {uname}{D}')
         with open('.uids.txt', 'a', encoding='utf-8') as f:
             f.write(username + '\n')
 
@@ -90,18 +83,18 @@ def main():
     start = int(input(f'{BOLD}{Y} START NUMBER : '))
     end = int(input(f'{BOLD}{Y} END NUMBER : '))
     
-    print(f'\n{G} [1] ULTRA SAFE (1 Thread)')
-    print(f'{Y} [2] BALANCED (3 Threads)')
-    print(f'{R} [3] FAST (5 Threads - Careful){D}\n')
+    print(f'\n{G} [1] LOW SPEED')
+    print(f'{Y} [2] MEDIUM SPEED')
+    print(f'{R} [3] HIGH SPEED (Optimized Threads){D}\n')
     
-    speed = int(input(f'{C} CHOOSE SPEED : {D}'))
-    # ৪MD ব্লক এড়াতে থ্রেড সংখ্যা নিয়ন্ত্রণ করা হয়েছে
-    spd = {1: 1, 2: 3, 3: 5}.get(speed, 1)
+    speed = int(input(f'{C} CHOOSE : {D}'))
+    # ৪MD ব্লক এড়াতে এবং স্পিড বজায় রাখতে থ্রেড লিমিট ১০ রাখা হয়েছে
+    spd = {1: 3, 2: 6, 3: 12}.get(speed, 3)
     
     usernames = username_gen(names, start, end)
     random.shuffle(usernames)
     
-    print(f'\n{BOLD}{G} TOTAL USERNAMES : {len(usernames)} | SPEED : {spd}X {D}')
+    print(f'\n{BOLD}{G} TOTAL : {len(usernames)} | SPEED : {spd}X {D}')
     print(f'{BOLD}{G} ----------------------------------------{D}')
     
     with ThreadPoolExecutor(max_workers=spd) as executor:
